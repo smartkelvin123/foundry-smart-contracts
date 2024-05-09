@@ -6,15 +6,15 @@ import {DeployMoodNft} from "../script/DeployMoodNft.s.sol";
 
 contract DeployMoodTest is Test {
     DeployMoodNft public deployer;
+
     function setUp() public {
-        deployer = new DeployMoodNft()
-
+        deployer = new DeployMoodNft();
     }
-    function testConvertSvgToUri() public {
-        string memory expectedUri = "" ,
-        string memory svg = "",
-        string memory actualUri = deployer.svgToImageURI(svg);
-        assert (keccak256(abi.encodePacked(actualUri)) == keccak256(abi.encodePacked(expectedUri)));
+    // function testConvertSvgToUri() public {
+    //     string memory expectedUri = "" ,
+    //     string memory svg = "",
+    //     string memory actualUri = deployer.svgToImageURI(svg);
+    //     assert (keccak256(abi.encodePacked(actualUri)) == keccak256(abi.encodePacked(expectedUri)));
 
-    }
+    // }
 }
