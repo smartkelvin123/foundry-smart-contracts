@@ -7,3 +7,9 @@
 [submodule "NFT/lib/foundry-devops"]
 	path = NFT/lib/foundry-devops
 	url = https://github.com/Cyfrin/foundry-devops
+[submodule "FOUNDRY-DEFI/lib/forge-std"]
+	path = FOUNDRY-DEFI/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "FOUNDRY-DEFI/lib/openzeppelin-contracts"]
+	path = FOUNDRY-DEFI/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
