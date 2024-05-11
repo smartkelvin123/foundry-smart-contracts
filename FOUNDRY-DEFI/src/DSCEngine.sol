@@ -24,9 +24,9 @@
 // view & pure functions
 
 pragma solidity 0.8.20;
-
-// import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import {DecentralizedStableCoin} from "./DecentralizedStableCoin";
+import { IERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 /*
  * @title DSCEngine
@@ -48,25 +48,35 @@ import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/Ree
  * @notice This contract is based on the MakerDAO DSS system
  */
 
-contract DSCEngine  is ReentrancyGuard {
-      ///////////////
-        // errors /// 
-        /////////////// 
-  error DSCEngine__NeedsMoreThanZero();
-  error DSCEngine_TokenAddressesAndPriceFeedAddressesMustBeSameLength();
+contract DSCEngine is ReentrancyGuard {
+    ///////////////
+    // errors ///
+    ///////////////
+    error DSCEngine__NeedsMoreThanZero();
+    error DSCEngine_TokenAddressesAndPriceFeedAddressesMustBeSameLength();
+    error DSCEngine_TokenIsNotAllowed();
+   error DSCEngine__TransferFailed();
 
-       ///////////////
-        // state variables /// 
-        /////////////// 
-    mapping (address token => address priceFeed) private s_priceFeed;   //tokenToPriceFeed
+    ///////////////
+    // state variables ///
+    ///////////////
+    mapping(address token => address priceFeed) private s_priceFeed; //tokenToPriceFeed
+    mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposited;
 
+    DecentralizedStableCoin private immutable i_dsc;
 
+    ///////////////
+    // events ///
+    ///////////////
+    event CollateralDeposited(address indexed user, address indexed token, uint256 indexed amount);
+    // event CollateralWithdrawn(address indexed user, address indexed token, uint256 amount);
+    // event DscMinted(address indexed user, uint256 amount);
+    // event DscRedeemed(address indexed user, uint256 amount);
 
-
-        ///////////////
-        // modifiers /// 
-        /////////////// 
-    modifier  moreThanZero (uint256 amount){
+    ///////////////
+    // modifiers ///
+    ///////////////
+    modifier moreThanZero(uint256 amount) {
         if (amount == 0) {
             revert DSCEngine__NeedsMoreThanZero();
         }
@@ -74,47 +84,55 @@ contract DSCEngine  is ReentrancyGuard {
         _;
     }
 
-    // modifier isAllowedToken (address token) {}
+    modifier isAllowedToken(address token) {
+        if (s_priceFeeds[token] == address(0)) {
+            revert DSCEngine_TokenIsNotAllowed();
+        }
 
+        _;
+    }
 
-
-
-         ///////////////
-        // functions /// 
-        /////////////// 
-     constructor( 
-        address[] memory tokenAddresses,
-        address[] memory priceFeedAddresses,
-        address dscAddress
-     ){
+    ///////////////
+    // functions ///
+    ///////////////
+    constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress) {
         //usd price feeds
-        if (tokenAddresses.length != priceFeedAddresses.length ){
+        if (tokenAddresses.length != priceFeedAddresses.length) {
             revert DSCEngine_TokenAddressesAndPriceFeedAddressesMustBeSameLength();
         }
-        for (uint256 i = 0; i < tokenAddresses.length; i++){
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
             s_priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
         }
-        //set the DSC token address
-        s_dscAddress = dscAddress;
-     }
+        i_dsc = DecentralizedStableCoin(dscAddress);
+    }
 
-       ///////////////
-        // External functions/// 
-        /////////////// 
+    ///////////////
+    // External functions///
+    ///////////////
 
     function depositeCollateralAndMintDsc() external {}
 
-
     /*
+    * @notice folows CEI
      * @param tokenCollateralAddress: The ERC20 token address of the collateral you're depositing
      * @param amountCollateral: The amount of collateral you're depositing
      * @param amountDscToMint: The amount of DSC you want to mint
      * @notice This function will deposit your collateral and mint DSC in one transaction
      */
-    function depositCollateral(
-        address tokenCollateralAddress, 
-        uint256 amountCollateral
-    )external  moreThanZero (moreThanZero){
+    function depositCollateral(address tokenCollateralAddress, uint256 amountCollateral)
+        external
+        moreThanZero(amountCollateral)
+        isAllowedToken(tokenCollateralAddress)
+        nonReentrant
+    {
+        s_collateralDeposited[msg.sender][tokenCollateralAddress] += amountCollateral;
+        emit CollateralDeposited(msg.sender, tokenCollateralAddress, amountCollateral);
+       bool success = IERC20(tokenCollateralAddress).transferFrom(msg.sender), address(this), amountCollateral
+        if (!success) {
+            revert DSCEngine__TransferFailed();
+        }
+
+
 
     }
 
@@ -122,16 +140,11 @@ contract DSCEngine  is ReentrancyGuard {
 
     function redeemCollateral() external {}
 
-    function mintDsc() external {
-        
-    }
+    function mintDsc() external {}
 
     function burnDsc() external {}
 
     function liquidate() external {}
 
-    function getHealthFactor() 
-
-
-
+    // function getHealthFactor()
 }
