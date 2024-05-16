@@ -27,7 +27,7 @@ pragma solidity 0.8.20;
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import { DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
 import { IERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { OracleLib, AggregatorV3Interface } from "./libraries/OracleLib.sol";
+// import { OracleLib, AggregatorV3Interface } from "./libraries/OracleLib.sol";
 
 /*
  * @title DSCEngine
@@ -58,7 +58,8 @@ contract DSCEngine is ReentrancyGuard {
     error DSCEngine_TokenIsNotAllowed();
     error DSCEngine__TransferFailed();
     error DSCEngine__MintFailed();
-    error DSCEngine__BreaksHealthFactor(unit256 healthFactor);
+    error DSCEngine__BreaksHealthFactor();
+    //   error DSCEngine__HealthFactorOk();
 
     ///////////////
     // state variables ///
@@ -162,14 +163,16 @@ contract DSCEngine is ReentrancyGuard {
      * You can only mint DSC if you hav enough collateral
      */
 
-    function mintDsc( uint256 amountDscToMINT) external moreThanZero (amountDscToMINT) nonReentrant {
-          s_DSCMinted[msg.sender] += amountDscToMint;
-           _revertIfHealthFactorIsBroken(msg.sender);
+  
+
+       function mintDsc(uint256 amountDscToMint) public moreThanZero(amountDscToMint) nonReentrant {
+        s_DSCMinted[msg.sender] += amountDscToMint;
+        _revertIfHealthFactorIsBroken(msg.sender);
         bool minted = i_dsc.mint(msg.sender, amountDscToMint);
+
         if (minted != true) {
             revert DSCEngine__MintFailed();
         }
-
     }
 
     function burnDsc() external {}
@@ -179,13 +182,13 @@ contract DSCEngine is ReentrancyGuard {
     // private and internal view functions///
     ///////////////
 
-    function _getAccountInformation (address, user)
-     private
-      view  
-    returns (unit256 totalDscMinted, unit256 collateralValedInUsd)
+     function _getAccountInformation(address user)
+        private
+        view
+        returns (uint256 totalDscMinted, uint256 collateralValueInUsd)
     {
-        totalDiscMinted = s_DSCMinted(user);
-        collateralValedInUsd = totalCollateralValueInUsd(user)
+        totalDscMinted = s_DSCMinted[user];
+        collateralValueInUsd = getAccountCollateralValue(user);
     }
 
     /*
@@ -214,22 +217,31 @@ contract DSCEngine is ReentrancyGuard {
     // public  and external view functions///
     ///////////////
 
-    function getAccountCollateralValue(address user) public view returns (uint256  totalCollateralValueInUsd) {
-        for (unit256 i = 0; i < s_collateralTokens.length; i++){
-            address token = s_collateralTokens[i];
-            unit256 amount = s_collateralDeposited[user][token];
-            totalCollateralValueInUsd += getUsdValue (token, amount)
+
+
+       function getAccountCollateralValue(address user) public view returns (uint256 totalCollateralValueInUsd) {
+        for (uint256 index = 0; index < s_collateralTokens.length; index++) {
+            address token = s_collateralTokens[index];
+            uint256 amount = s_collateralDeposited[user][token];
+            totalCollateralValueInUsd += _getUsdValue(token, amount);
         }
         return totalCollateralValueInUsd;
     }
 
-    function getUsdValue(address token , unit256 amount) public view returns (unit256) {
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeed[token]);
-        (,int256 price,,,) = priceFeed.latestRoundData();
-        return ((unit256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
+  
+
+      function getUsdValue(
+        address token,
+        uint256 amount // in WEI
+    )
+        external
+        view
+        returns (uint256)
+    {
+        return getUsdValue(token, amount);
+    }
         
 
-    }
         
 
 }
