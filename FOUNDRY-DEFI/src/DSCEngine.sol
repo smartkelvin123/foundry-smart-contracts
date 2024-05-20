@@ -294,6 +294,15 @@ contract DSCEngine is ReentrancyGuard {
     // public  and external view functions///
     ///////////////
 
+       function getTokenAmountFromUsd(address token, uint256 usdAmountInWei) public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        (, int256 price,,,) = priceFeed.staleCheckLatestRoundData();
+        // $100e18 USD Debt
+        // 1 ETH = 2000 USD
+        // The returned value from Chainlink will be 2000 * 1e8
+        // Most USD pairs have 8 decimals, so we will just pretend they all do
+        return ((usdAmountInWei * PRECISION) / (uint256(price) * ADDITIONAL_FEED_PRECISION));
+    }
 
 
        function getAccountCollateralValue(address user) public view returns (uint256 totalCollateralValueInUsd) {
@@ -321,4 +330,4 @@ contract DSCEngine is ReentrancyGuard {
 
         
 
-}
+
