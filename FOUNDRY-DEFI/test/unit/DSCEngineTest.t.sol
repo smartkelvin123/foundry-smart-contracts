@@ -13,6 +13,9 @@ import { ERC20Mock } from "../mocks/ERC20Mock.sol";
 
 contract DSCEngineTest is Test {
    
+   event CollateralRedeemed(address indexed redeemFrom, address indexed redeemTo, address token, uint256 amount); // if
+        // redeemFrom != redeemedTo, then it was liquidated
+
     DSCEngine public dsce;
     DecentralizedStableCoin public dsc;
     HelperConfig public helperConfig;
@@ -25,18 +28,15 @@ contract DSCEngineTest is Test {
 
     uint256 amountCollateral = 10 ether;
     uint256 amountToMint = 100 ether;
-    address public USER  = makeAddr("user");
+    address public user = address(1);
 
-
-     uint256 public constant AMOUNT_COLLATERAL = 10 ether;
-     uint256 public constant STARTING_USER_BALANCE = 10 ether;
-    // uint256 public constant MIN_HEALTH_FACTOR = 1e18;
-    // uint256 public constant LIQUIDATION_THRESHOLD = 50;
+    uint256 public constant STARTING_USER_BALANCE = 10 ether;
+    uint256 public constant MIN_HEALTH_FACTOR = 1e18;
+    uint256 public constant LIQUIDATION_THRESHOLD = 50;
 
     // Liquidation
     address public liquidator = makeAddr("liquidator");
     uint256 public collateralToCover = 20 ether;
-
 
 
 
@@ -58,7 +58,7 @@ contract DSCEngineTest is Test {
         uint256 usdValue = dsce.getUsdValue(weth, ethAmount);
         assertEq(usdValue, expectedUsd);
     }
-  }
+  
 
   ///////////////// ///////
   // depositcollateral  price Tests ////
@@ -70,9 +70,34 @@ contract DSCEngineTest is Test {
     vm.expectRevert(DSCEngine.DSCEngine_NeedsMoreThanZero.selector);
     dsce.depositCollateral(weth,0);
     vm.stopPrank()
+  }
+   modifier depositedCollateral() {
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(dsce), amountCollateral);
+        dsce.depositCollateral(weth, amountCollateral);
+        vm.stopPrank();
+        _;
+    }
+
+     function testCanDepositCollateralWithoutMinting() public depositedCollateral {
+        uint256 userBalance = dsc.balanceOf(user);
+        assertEq(userBalance, 0);
+    }
+
+    function testCanDepositedCollateralAndGetAccountInfo() public depositedCollateral {
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(user);
+        uint256 expectedDepositedAmount = dsce.getTokenAmountFromUsd(weth, collateralValueInUsd);
+        assertEq(totalDscMinted, 0);
+        assertEq(expectedDepositedAmount, amountCollateral);
+    }
+
+
+
+
 
    
-  }
+
+}
 
   
 
