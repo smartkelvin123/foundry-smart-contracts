@@ -1,12 +1,8 @@
-// SPDX-License-Identifier: MIT
-
-// This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
-
 // Layout of Contract:
 // version
 // imports
-// interfaces, libraries, contracts
 // errors
+// interfaces, libraries, contracts
 // Type declarations
 // State variables
 // Events
@@ -21,13 +17,18 @@
 // public
 // internal
 // private
-// view & pure functions
+// internal & private view & pure functions
+// external & public view & pure functions
 
-pragma solidity 0.8.20;
-import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
-import { DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
-import { IERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-// import { OracleLib, AggregatorV3Interface } from "./libraries/OracleLib.sol";
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.19;
+
+import { OracleLib, AggregatorV3Interface } from "./libraries/OracleLib.sol";
+// import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard"
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { DecentralizedStableCoin } from "./DecentralizedStableCoin.sol";
 
 /*
  * @title DSCEngine
@@ -48,7 +49,6 @@ import { IERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC
  * for minting and redeeming DSC, as well as depositing and withdrawing collateral.
  * @notice This contract is based on the MakerDAO DSS system
  */
-
 contract DSCEngine is ReentrancyGuard {
     ///////////////////
     // Errors

@@ -16,3 +16,6 @@
 [submodule "FOUNDRY-DEFI/lib/chainlink-brownie-contracts"]
 	path = FOUNDRY-DEFI/lib/chainlink-brownie-contracts
 	url = https://github.com/smartcontractkit/chainlink-brownie-contracts
+[submodule "FOUNDRY-DEFI/lib/foundry-devops"]
+	path = FOUNDRY-DEFI/lib/foundry-devops
+	url = https://github.com/Cyfrin/foundry-devops
